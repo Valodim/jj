@@ -255,6 +255,13 @@ pub fn create_tree(repo: &Arc<ReadonlyRepo>, path_contents: &[(&RepoPath, &str)]
     store.get_tree(&RepoPath::root(), &id).unwrap()
 }
 
+pub fn create_merged_tree(
+    repo: &Arc<ReadonlyRepo>,
+    path_contents: &[(&RepoPath, &str)],
+) -> MergedTree {
+    MergedTree::resolved(create_tree(repo, path_contents))
+}
+
 #[must_use]
 pub fn create_random_tree(repo: &Arc<ReadonlyRepo>) -> TreeId {
     let mut tree_builder = repo
