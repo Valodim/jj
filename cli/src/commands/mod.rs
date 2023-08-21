@@ -2429,9 +2429,9 @@ from the source will be moved into the destination.
         ui,
         &parent_tree,
         &source_tree,
+        matcher.as_ref(),
         &instructions,
         args.interactive,
-        matcher.as_ref(),
     )?;
     if args.interactive && &new_parent_tree_id == parent_tree.id() {
         return Err(user_error("No changes to move"));
@@ -2513,9 +2513,9 @@ from the source will be moved into the parent.
         ui,
         &parent.tree(),
         &commit.tree(),
+        matcher.as_ref(),
         &instructions,
         args.interactive,
-        matcher.as_ref(),
     )?;
     if &new_parent_tree_id == parent.tree_id() {
         if args.interactive {
@@ -2608,7 +2608,13 @@ aborted.
             tx.format_commit_summary(parent),
             tx.format_commit_summary(&commit)
         );
-        new_parent_tree_id = tx.edit_diff(ui, &parent_base_tree, &parent.tree(), &instructions)?;
+        new_parent_tree_id = tx.edit_diff(
+            ui,
+            &parent_base_tree,
+            &parent.tree(),
+            &EverythingMatcher,
+            &instructions,
+        )?;
         if &new_parent_tree_id == parent_base_tree.id() {
             return Err(user_error("No changes selected"));
         }
@@ -2966,7 +2972,13 @@ don't make any changes, then the operation will be aborted.",
         tx.format_commit_summary(&target_commit),
     );
     let base_tree = merge_commit_trees(tx.repo(), base_commits.as_slice())?;
-    let tree_id = tx.edit_diff(ui, &base_tree, &target_commit.tree(), &instructions)?;
+    let tree_id = tx.edit_diff(
+        ui,
+        &base_tree,
+        &target_commit.tree(),
+        &EverythingMatcher,
+        &instructions,
+    )?;
     if &tree_id == target_commit.tree_id() {
         ui.write("Nothing changed.\n")?;
     } else {
@@ -3072,9 +3084,9 @@ don't make any changes, then the operation will be aborted.
         ui,
         &base_tree,
         &commit.tree(),
+        matcher.as_ref(),
         &instructions,
         interactive,
-        matcher.as_ref(),
     )?;
     if &tree_id == commit.tree_id() && interactive {
         ui.write("Nothing changed.\n")?;

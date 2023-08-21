@@ -1469,6 +1469,7 @@ impl WorkspaceCommandTransaction<'_> {
         ui: &Ui,
         left_tree: &Tree,
         right_tree: &Tree,
+        matcher: &dyn Matcher,
         instructions: &str,
     ) -> Result<TreeId, CommandError> {
         let base_ignores = self.helper.base_ignores();
@@ -1477,6 +1478,7 @@ impl WorkspaceCommandTransaction<'_> {
             ui,
             &MergedTree::Legacy(left_tree.clone()),
             &MergedTree::Legacy(right_tree.clone()),
+            matcher,
             instructions,
             base_ignores,
             settings,
@@ -1489,12 +1491,12 @@ impl WorkspaceCommandTransaction<'_> {
         ui: &Ui,
         left_tree: &Tree,
         right_tree: &Tree,
+        matcher: &dyn Matcher,
         instructions: &str,
         interactive: bool,
-        matcher: &dyn Matcher,
     ) -> Result<TreeId, CommandError> {
         if interactive {
-            self.edit_diff(ui, left_tree, right_tree, instructions)
+            self.edit_diff(ui, left_tree, right_tree, matcher, instructions)
         } else if matcher.visit(&RepoPath::root()) == Visit::AllRecursively {
             // Optimization for a common case
             Ok(right_tree.id().clone())
