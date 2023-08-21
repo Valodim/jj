@@ -468,6 +468,9 @@ struct DescribeArgs {
 #[derive(clap::Args, Clone, Debug)]
 #[command(visible_aliases=&["ci"])]
 struct CommitArgs {
+    /// Interactively choose which changes to commit
+    #[arg(short, long)]
+    interactive: bool,
     /// The change description to use (don't open editor)
     #[arg(long = "message", short, value_name = "MESSAGE")]
     message_paragraphs: Vec<String>,
@@ -2070,7 +2073,24 @@ fn cmd_commit(ui: &mut Ui, command: &CommandHelper, args: &CommitArgs) -> Result
     let matcher = workspace_command.matcher_from_values(&args.paths)?;
     let mut tx = workspace_command.start_transaction(&format!("commit {}", commit.id().hex()));
     let base_tree = merge_commit_trees(tx.repo(), &commit.parents())?;
-    let tree_id = tx.select_diff(ui, &base_tree, &commit.tree(), matcher.as_ref(), "", false)?;
+    let instructions = format!(
+        "\
+You are making a partial commit from the changes in: {}
+
+The diff initially shows all changes. Adjust the right side until it shows the
+contents you want for the new commit. The remainder will stay in the working
+copy.
+",
+        tx.format_commit_summary(&commit)
+    );
+    let tree_id = tx.select_diff(
+        ui,
+        &base_tree,
+        &commit.tree(),
+        matcher.as_ref(),
+        &instructions,
+        args.interactive,
+    )?;
     let middle_tree = tx.repo().store().get_tree(&RepoPath::root(), &tree_id)?;
     if !args.paths.is_empty() && middle_tree.id() == base_tree.id() {
         writeln!(
