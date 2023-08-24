@@ -11,25 +11,26 @@ authenticated http.
 
 ## Basic workflow
 
-The simplest way to start with Jujutsu, is creating a stack of commits, before
-creating any branch.
+The simplest way to start with Jujutsu is to create a stack of commits first.
+You will only need to create a branch when you need to push the stack to a 
+remote. 
 
 ```shell script
-# Start a new commit off of `main`
+# Start a new commit off of the default branch.
 $ jj new main
 # Refactor some files, then add a description and start a new commit
 $ jj commit -m 'refactor(foo): restructure foo()'
 # Add a feature, then add a description and start a new commit
 $ jj commit -m 'feat(bar): add support for bar'
 # Create a branch so we can push it to GitHub
-$ jj branch create bar -r @-
+$ jj branch create bar -r @- # create a branch `bar` that now contains the previous two commits.
 # Push the branch to GitHub (pushes only `bar`)
 $ jj git push
 ```
 
 While it's possible to create a branch and commit on top of it in a Git like
-manner, it's not recommended, as no further commits will be placed on the
-branch.
+manner, you will then need to move the branch manually when you create a new 
+commits. Unlike Git, Jujutsu will not do it automatically .
 
 ## Updating the repository.
 
@@ -64,8 +65,8 @@ able to create a branch for a revision.
 ```shell script
 $ # Do your work
 $ jj commit
-$ # Jujutsu automatically creates a branch
-$ jj git push --change $revision
+$ # Push change "mw", letting Jujutsu automatically create a branch called "push-mwmpwkwknuz"
+$ jj git push --change mw 
 ```
 
 ## Addressing review comments
@@ -91,7 +92,23 @@ $ jj commit -m 'address pr comments'
 $ # Update the branch to point to the new commit.
 $ jj branch set your-feature -r @-
 $ # Push it to your remote
-$ jj git push.
+$ jj git push
+```
+
+Notably, the above workflow creates a new commit for you. The same can be 
+achieved without creating a new commit. 
+
+```shell script
+$ # Create a new commit on top of the `your-feature` branch from above.
+$ jj new your-feature
+$ # Address the comments, by updating the code
+$ jj diff
+$ # Give the fix a description.
+$ jj describe -m 'address pr comments'
+$ # Update the branch to point to the current commit.
+$ jj branch set your-feature -r @
+$ # Push it to your remote
+$ jj git push
 ```
 
 ### Rewriting commits
@@ -111,6 +128,17 @@ $ jj squash
 $ # Push the updated branch to the remote. Jujutsu automatically makes it a force push
 $ jj git push --branch your-feature
 ```
+
+## Working with other people's branches
+
+By default `jj git clone` and `jj git fetch` clone all active branches from
+the remote. This means that if you want to iterate or test another 
+contributor's branch you can `jj new <branchname>` onto it.
+
+If your remote has a large amount of old, inactive branches or this feature is
+undesirable, set `git.auto-local-branch = false` in the config file.
+
+You can find more information on that setting [here][auto-branch].
 
 ## Using GitHub CLI
 
@@ -159,6 +187,8 @@ the [tutorial][tut].
 branches.
 [^2]: If you're wondering why we prefer clean commits in this project, see
 e.g.[this blog post][stacked]
+
+[auto-branch]: config.md#automatic-local-branch-creation
 
 [detached]: https://git-scm.com/docs/git-checkout#_detached_head
 
